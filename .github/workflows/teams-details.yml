@@ -1,0 +1,35 @@
+name: Fetch GitHub Team Details
+
+on:
+  workflow_dispatch:  # Manual trigger from Actions tab
+
+jobs:
+  fetch-teams:
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+      GITHUB_ORG: ${{ secrets.GITHUB_ORG }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: pip install requests python-dotenv
+
+      - name: Run team fetch script
+        run: python fetch_teams_details.py --csv-file github_teams.csv  # replace if your script filename is different
+
+      - name: Upload CSV and logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-team-details
+          path: |
+            github_teams.csv
+            team_fetch.log
