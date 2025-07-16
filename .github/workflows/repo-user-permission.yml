@@ -1,0 +1,36 @@
+name: Fetch Repo Permissions
+
+on:
+  workflow_dispatch:  # Manual trigger from GitHub UI
+
+jobs:
+  fetch-permissions:
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+      GITHUB_ORG: ${{ secrets.GITHUB_ORG }}
+      TARGET_ORGANIZATION: ${{ secrets.TARGET_ORGANIZATION || secrets.GITHUB_ORG }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: pip install python-dotenv requests
+
+      - name: Run repo-permissions script
+        run: python fetch_repo_user_permissions.py  # Replace with your actual filename
+
+      - name: Upload CSV and log
+        uses: actions/upload-artifact@v4
+        with:
+          name: repo-permissions-output
+          path: |
+            user_repo_permission.csv
+            repo-permissions.log
