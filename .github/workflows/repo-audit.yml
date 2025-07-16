@@ -26,7 +26,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ORG_NAME: ${{ secrets.ORG_NAME }}
         run: |
-          python fetch_repo_details.py
+          python fetch_repo_details(inventory).py
 
       - name: Upload CSV Output
         uses: actions/upload-artifact@v4
