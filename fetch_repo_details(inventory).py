@@ -6,11 +6,13 @@ from datetime import datetime
 from dotenv import load_dotenv
 from requests.exceptions import ConnectionError, ChunkedEncodingError
 
+# Load .env variables
 load_dotenv()
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
-ORG_NAME = os.getenv("ORG_NAME")
+GITHUB_PAT = os.getenv("GITHUB_PAT")
+GITHUB_ORG = os.getenv("GITHUB_ORG")
+
 HEADERS = {
-    "Authorization": f"Bearer {GITHUB_TOKEN}",
+    "Authorization": f"token {GITHUB_PAT}",
     "Accept": "application/vnd.github+json"
 }
 
@@ -36,7 +38,7 @@ def github_api_get(url, params=None, max_retries=5):
         except (ConnectionError, ChunkedEncodingError) as e:
             retries += 1
             log_error(f"Connection error on {url}: {e}. Retry {retries}/{max_retries}")
-            time.sleep(5 * retries)  # Exponential backoff
+            time.sleep(5 * retries)
         except Exception as e:
             log_error(f"Unexpected error on {url}: {e}")
             return None
@@ -66,7 +68,6 @@ def get_pr_counts(org, repo):
     merged_prs = 0
     closed_count = len(closed_prs) if closed_prs else 0
     if closed_prs:
-        # GitHub doesn't provide merged PR count directly, so we have to iterate (slow for many PRs)
         page = 1
         per_page = 100
         while True:
@@ -85,9 +86,6 @@ def get_pr_counts(org, repo):
 
 def get_issue_counts(org, repo):
     url = f"https://api.github.com/repos/{org}/{repo}/issues"
-    open_issues = github_api_get(url, {"state": "open", "per_page": 1})
-    closed_issues = github_api_get(url, {"state": "closed", "per_page": 1})
-    # Only issues, not PRs
     def count_issues(state):
         page = 1
         per_page = 100
@@ -147,16 +145,15 @@ def get_primary_language(repo_data):
     return repo_data.get("language", "")
 
 def main():
-    org = ORG_NAME
-    if not org:
-        print("ORG_NAME not set in .env file.")
+    if not GITHUB_ORG:
+        print("GITHUB_ORG not set in .env file.")
         return
-    repos = get_repos(org)
+    repos = get_repos(GITHUB_ORG)
     if not repos:
         print("No repositories found or error occurred.")
         return
 
-    filename = f"{org}_repo_details_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+    filename = f"{GITHUB_ORG}_repo_details_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
     with open(filename, "w", newline='', encoding="utf-8") as csvfile:
         fieldnames = [
             "Repo Name", "Visibility", "Created At", "Updated At", "Last Pushed Date", "Repo Size (MB)",
@@ -170,11 +167,14 @@ def main():
         for repo in repos:
             print(f"Processing {repo['name']}...")
             try:
-                open_prs, closed_prs, merged_prs = get_pr_counts(org, repo["name"])
-                open_issues, closed_issues = get_issue_counts(org, repo["name"])
-                branch_count = get_branches(org, repo["name"])
-                tag_count = get_tags(org, repo["name"])
-                last_commit_date, last_commit_user = get_last_commit(org, repo["name"], repo["default_branch"])
+                open_prs, closed_prs, merged_prs = get_pr_counts(GITHUB_ORG, repo["name"])
+                open_issues, closed_issues = get_issue_counts(GITHUB_ORG, repo["name"])
+                branch_count = get_branches(GITHUB_ORG, repo["name"])
+                tag_count = get_tags(GITHUB_ORG, repo["name"])
+                last_commit_date, last_commit_user = get_last_commit(GITHUB_ORG, repo["name"], repo["default_branch"])
+                releases_url = f"https://api.github.com/repos/{GITHUB_ORG}/{repo['name']}/releases"
+                releases = github_api_get(releases_url, {"per_page": 1})
+
                 row = {
                     "Repo Name": repo["name"],
                     "Visibility": repo["visibility"],
@@ -189,16 +189,14 @@ def main():
                     "Total Open Issues": open_issues,
                     "Total Closed Issues": closed_issues,
                     "Total Branches": branch_count,
-                    "Total Releases": repo["open_issues_count"],  # fallback, see below
+                    "Total Releases": len(releases) if releases else 0,
                     "Total Tags": tag_count,
                     "Last Committed Date": last_commit_date,
                     "Last Committed User": last_commit_user
                 }
-                # Releases count
-                releases_url = f"https://api.github.com/repos/{org}/{repo['name']}/releases"
-                releases = github_api_get(releases_url, {"per_page": 1})
-                row["Total Releases"] = len(releases) if releases else 0
+
                 writer.writerow(row)
+
             except Exception as e:
                 log_error(f"Error processing {repo['name']}: {e}")
                 continue
