@@ -1,0 +1,35 @@
+name: Fetch GitHub Repositories
+
+on:
+  workflow_dispatch:  # Manual trigger from GitHub UI
+
+jobs:
+  fetch-repos:
+    runs-on: ubuntu-latest
+
+    env:
+      GITHUB_ORG: ${{ secrets.GITHUB_ORG }}
+      GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: pip install python-dotenv requests
+
+      - name: Run fetch_repos script
+        run: python fetch_repo_list.py  # update if your script has a different name
+
+      - name: Upload CSV and logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-repos-output
+          path: |
+            github_repos.csv
+            logs/fetch_repos.log
