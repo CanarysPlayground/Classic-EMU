@@ -1,21 +1,22 @@
 name: Fetch GitHub Repositories
 
 on:
-  workflow_dispatch:  # Manual trigger from GitHub UI
+  workflow_dispatch:
 
 jobs:
   fetch-repos:
     runs-on: ubuntu-latest
 
     env:
-      GITHUB_ORG: ${{ secrets.GITHUB_ORG }}
-      GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
+      # Pass GitHub Secrets as env variables for the script to consume if present
+      GH_ORG: ${{ secrets.GH_ORG }}
+      GH_PAT: ${{ secrets.GH_PAT }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: 3.11
@@ -23,10 +24,26 @@ jobs:
       - name: Install dependencies
         run: pip install python-dotenv requests
 
-      - name: Run fetch_repos script
-        run: python fetch_repo_list.py  # update if your script has a different name
+      - name: Check for .env file
+        run: |
+          echo "🔍 Checking for .env file..."
+          if [ -f .env ]; then
+            echo "✅ .env file found and will be used if secrets are missing"
+          else
+            echo "⚠️ .env file NOT found. Relying on GitHub Secrets only"
+          fi
 
-      - name: Upload CSV and logs
+      - name: Run fetch script
+        run: |
+          if [ -f fetch_repo_list.py ]; then
+            echo "🚀 Running fetch_repo_list.py..."
+            python fetch_repo_list.py
+          else
+            echo "❌ fetch_repo_list.py not found!"
+            exit 1
+          fi
+
+      - name: Upload output files
         uses: actions/upload-artifact@v4
         with:
           name: github-repos-output
