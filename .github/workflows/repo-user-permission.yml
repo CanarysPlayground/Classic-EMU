@@ -8,9 +8,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
-      GITHUB_ORG: ${{ secrets.GITHUB_ORG }}
-      TARGET_ORGANIZATION: ${{ secrets.TARGET_ORGANIZATION || secrets.GITHUB_ORG }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      GH_ORG: ${{ secrets.GH_ORG }}
+      TARGET_ORGANIZATION: ${{ secrets.TARGET_ORGANIZATION || secrets.GH_ORG }}
 
     steps:
       - name: Checkout repository
@@ -25,7 +25,7 @@ jobs:
         run: pip install python-dotenv requests
 
       - name: Run repo-permissions script
-        run: python fetch_repo_user_permissions.py  # Replace with your actual filename
+        run: python fetch_repo_user_permissions.py  # Your script filename here
 
       - name: Upload CSV and log
         uses: actions/upload-artifact@v4
