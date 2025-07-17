@@ -39,13 +39,13 @@ class GitHubTeamFetcher:
         logger.info(f"Initialized GitHub Team Fetcher for organization: {self.org_name}")
 
     def refresh_env_vars(self):
-        self.token = os.getenv('GITHUB_PAT')
-        self.org_name = os.getenv('GITHUB_ORG')
+        self.token = os.getenv('GH_PAT')
+        self.org_name = os.getenv('GH_ORG')
 
         if not self.token:
-            raise ValueError("GITHUB_PAT environment variable is required")
+            raise ValueError("GH_PAT environment variable is required")
         if not self.org_name:
-            raise ValueError("GITHUB_ORG environment variable is required")
+            raise ValueError("GH_ORG environment variable is required")
 
     def make_api_request(self, method, url, **kwargs):
         """Make API request with rate limiting and retry logic."""
@@ -475,14 +475,14 @@ def main():
     parser.add_argument('--csv-file', type=str, default='github_teams.csv',
                         help="Output CSV file name (default: github_teams.csv)")
     parser.add_argument('--org', type=str,
-                        help="GitHub organization name (overrides GITHUB_ORG env var)")
+                        help="GitHub organization name (overrides GH_ORG env var)")
     parser.add_argument('--estimate-only', action='store_true',
                         help="Only estimate API calls needed, don't fetch data")
     args = parser.parse_args()
 
     # Override environment variables if provided
     if args.org:
-        os.environ['GITHUB_ORG'] = args.org
+        os.environ['GH_ORG'] = args.org
 
     try:
         logger.info("Starting GitHub team details fetch process...")
