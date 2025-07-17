@@ -8,8 +8,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      GITHUB_PAT: ${{ secrets.GITHUB_PAT }}
-      GITHUB_ORG: ${{ secrets.GITHUB_ORG }}
+      GH_PAT: ${{ secrets.GH_PAT }}
+      GH_ORG: ${{ secrets.GH_ORG }}
 
     steps:
       - name: Checkout repository
@@ -24,7 +24,7 @@ jobs:
         run: pip install requests python-dotenv
 
       - name: Run team fetch script
-        run: python fetch_teams_details.py --csv-file github_teams.csv  # replace if your script filename is different
+        run: python fetch_teams_details.py --csv-file github_teams.csv  # update filename if needed
 
       - name: Upload CSV and logs
         uses: actions/upload-artifact@v4
