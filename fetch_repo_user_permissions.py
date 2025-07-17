@@ -7,14 +7,15 @@ from dotenv import load_dotenv
 
 # === LOAD CONFIGURATION FROM .env ===
 load_dotenv()
-GITHUB_TOKEN = os.getenv("GITHUB_PAT")
-ORG_NAME = os.getenv("GITHUB_ORG")
-TARGET_ORG_NAME = os.getenv("TARGET_ORGANIZATION", ORG_NAME)  # Defaults to source org if not set
+
+GH_PAT = os.getenv("GH_PAT")
+GH_ORG = os.getenv("GH_ORG")
+TARGET_ORG_NAME = os.getenv("TARGET_ORGANIZATION", GH_ORG)  # Defaults to source org if not set
 CSV_FILE = "user_repo_permission.csv"
 
 # === HEADERS ===
 headers = {
-    "Authorization": f"token {GITHUB_TOKEN}",
+    "Authorization": f"token {GH_PAT}",
     "Accept": "application/vnd.github.v3+json"
 }
 
@@ -97,26 +98,26 @@ def main():
     logging.info("Starting to fetch repository permissions.")
     rows = []
 
-    if not GITHUB_TOKEN or not ORG_NAME:
-        logging.error("GITHUB_PAT or GITHUB_ORG is not set.")
+    if not GH_PAT or not GH_ORG:
+        logging.error("GH_PAT or GH_ORG is not set.")
         return
 
-    repos = fetch_repos(ORG_NAME)
+    repos = fetch_repos(GH_ORG)
 
     for repo in repos:
         repo_name = repo.get("name")
         logging.info(f"Processing repository: {repo_name}")
-        collaborators = fetch_collaborators(ORG_NAME, repo_name)
+        collaborators = fetch_collaborators(GH_ORG, repo_name)
 
         for user in collaborators:
             username = user.get("login")
             user_role = user.get("role_name")
             if not user_role:
-                user_role = get_collaborator_role(ORG_NAME, repo_name, username)
+                user_role = get_collaborator_role(GH_ORG, repo_name, username)
             normalized_permission = normalize_permission(user_role)
 
             rows.append([
-                ORG_NAME,
+                GH_ORG,
                 repo_name,
                 username,
                 user_role,
