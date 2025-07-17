@@ -1,35 +1,33 @@
-name: GitHub Org Repo Audit
+name: GitHub Inventory Details
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch:  # You can also use `schedule:` for daily/weekly runs
 
 jobs:
-  audit-repos:
+  audit-org-repos:
     runs-on: ubuntu-latest
 
+    env:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      GH_ORG: ${{ secrets.GH_ORG }}
+
     steps:
-      - name: Checkout Repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: 3.11
 
       - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
-      - name: Run Repo Audit Script
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ORG_NAME: ${{ secrets.ORG_NAME }}
-        run: |
-          python fetch_repo_details(inventory).py
+      - name: Run repo audit script
+        run: python fetch_repo_details_inventory.py
 
-      - name: Upload CSV Output
+      - name: Upload output CSV
         uses: actions/upload-artifact@v4
         with:
-          name: repo-audit-results
-          path: "*.csv"
+          name: repo-audit-report
+          path: output/*.csv
