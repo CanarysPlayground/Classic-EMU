@@ -4,7 +4,7 @@ on:
   workflow_dispatch:  # You can also use `schedule:` for daily/weekly runs
 
 jobs:
-  audit-org-repos:
+  github-inventory:
     runs-on: ubuntu-latest
 
     env:
