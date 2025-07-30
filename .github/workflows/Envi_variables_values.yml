@@ -1,0 +1,45 @@
+name: GitHub Environment Variables Values
+
+on:
+  workflow_dispatch:  
+
+
+jobs:
+  fetch-environment-variables:
+    runs-on: ubuntu-latest
+
+    env:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      GH_ORG: ${{ secrets.GH_ORG }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests python-dotenv
+
+      - name: Debug – List files in repository
+        run: ls -la
+
+      - name: Run script to fetch environment variables
+        run: |
+          if [ -f fetch_envi_variables_values.py ]; then
+            python fetch_envi_variables_values.py
+          else
+            echo "❌ Script 'fetch_envi_variables_values.py' not found!"
+            exit 1
+          fi
+
+      - name: Upload generated CSV report
+        uses: actions/upload-artifact@v4
+        with:
+          name: environment-variables-report
+          path: github_environments_variables.csv
