@@ -1,0 +1,33 @@
+name: Action Runners
+
+on:
+  workflow_dispatch:  # You can also add schedule for automation
+
+jobs:
+  fetch-runners:
+    runs-on: ubuntu-latest
+
+    env:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      GH_ORG: ${{ secrets.GH_ORG }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: pip install requests python-dotenv
+
+      - name: Run runner inventory script
+        run: python fetch_github_action_runners.py
+
+      - name: Upload runners CSV
+        uses: actions/upload-artifact@v4
+        with:
+          name: runners-inventory
+          path: github_action_runners.csv
