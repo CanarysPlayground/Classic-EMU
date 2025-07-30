@@ -1,0 +1,44 @@
+name: Environment Reviewers
+
+on:
+  workflow_dispatch:  # You can also use `schedule:` for daily/weekly runs
+
+jobs:
+  audit-org-repos:
+    runs-on: ubuntu-latest
+
+    env:
+      GH_PAT: ${{ secrets.GH_PAT }}
+      GH_ORG: ${{ secrets.GH_ORG }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests python-dotenv
+
+      - name: Debug – list files in workspace
+        run: ls -R
+
+      - name: Run environment reviewers script
+        run: |
+          if [ -f fetch_environment_reviewers.py ]; then
+            python fetch_environment_reviewers.py
+          else
+            echo "❌ Script 'fetch_environment_reviewers.py' not found!"
+            exit 1
+          fi
+
+      - name: Upload output CSV
+        uses: actions/upload-artifact@v4
+        with:
+          name: environment-reviewers-report
+          path: environment_reviewers.csv
