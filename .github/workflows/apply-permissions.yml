@@ -1,0 +1,37 @@
+name: Apply Repository Permissions
+
+on:
+  workflow_dispatch:  # Manual trigger from GitHub UI
+
+jobs:
+  apply-permissions:
+    runs-on: ubuntu-latest
+
+    env:
+      TARGET_GH_PAT: ${{ secrets.TARGET_GH_PAT }}
+      TARGET_GH_ORG: ${{ secrets.TARGET_GH_ORG }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install python-dotenv requests pandas
+
+      - name: Run permission script with CSV input
+        run: python apply_repo_permission.py user_repo_permission.csv
+
+      - name: Upload logs and output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: permission-results
+          path: |
+            apply-permissions.log
+            permission-output.csv
+          retention-days: 7
