@@ -1,0 +1,38 @@
+name: Add-repos-to-team
+
+on:
+  workflow_dispatch:
+
+jobs:
+  assign-repos:
+    runs-on: ubuntu-latest
+
+    env:
+      TARGET_GH_PAT: ${{ secrets.TARGET_GH_PAT }}
+      TARGET_GH_ORG: ${{ secrets.TARGET_GH_ORG }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests python-dotenv pandas
+
+      - name: Run repo assignment script
+        run: |
+          python add_repo_to_teams.py --csv-file github_teams.csv
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repo-assignment-logs
+          path: '*.log'
+          retention-days: 90
