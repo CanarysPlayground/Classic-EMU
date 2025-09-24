@@ -10,7 +10,7 @@ load_dotenv()
 
 GH_PAT = os.getenv("GH_PAT")
 GH_ORG = os.getenv("GH_ORG")
-TARGET_ORG_NAME = os.getenv("TARGET_ORGANIZATION", GH_ORG)  # Defaults to source org if not set
+TARGET_ORG_NAME = os.getenv("TARGET_GH_ORG", GH_ORG)  # Defaults to source org if not set
 CSV_FILE = "user_repo_permission.csv"
 
 # === HEADERS ===
