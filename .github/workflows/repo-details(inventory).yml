@@ -18,7 +18,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.11
+          python-version: 3.x
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -29,5 +29,5 @@ jobs:
       - name: Upload output CSV
         uses: actions/upload-artifact@v4
         with:
-          name: repo-audit-report
+          name: ${{ env.GH_ORG }}-repo-details_$(date +%Y%m%d)
           path: output/*.csv

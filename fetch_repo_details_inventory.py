@@ -37,6 +37,9 @@ def github_api_get(url, params=None, retries=3):
                 print(f"⏳ Rate limit hit. Sleeping for {sleep_time} seconds...")
                 time.sleep(sleep_time)
                 continue
+            # Handle 409 Conflict specifically for empty repos
+            if response.status_code == 409:
+                return None
             response.raise_for_status()
             return response.json()
         except (ConnectionError, ChunkedEncodingError) as e:
@@ -66,6 +69,11 @@ def get_pr_counts(org, repo):
     url = f"https://api.github.com/repos/{org}/{repo}/pulls"
     open_prs = github_api_get(url, {"state": "open"})
     closed_prs = github_api_get(url, {"state": "closed"})
+    
+    # Handle None or empty responses
+    open_prs = open_prs if open_prs is not None else []
+    closed_prs = closed_prs if closed_prs is not None else []
+    
     merged_count = sum(1 for pr in closed_prs if pr.get("merged_at"))
     return len(open_prs), len(closed_prs), merged_count
 
@@ -73,6 +81,11 @@ def get_issue_counts(org, repo):
     issues_url = f"https://api.github.com/repos/{org}/{repo}/issues"
     open_issues = github_api_get(issues_url, {"state": "open"})
     closed_issues = github_api_get(issues_url, {"state": "closed"})
+    
+    # Handle None or empty responses
+    open_issues = open_issues if open_issues is not None else []
+    closed_issues = closed_issues if closed_issues is not None else []
+    
     open_issues = [i for i in open_issues if "pull_request" not in i]
     closed_issues = [i for i in closed_issues if "pull_request" not in i]
     return len(open_issues), len(closed_issues)
@@ -80,17 +93,24 @@ def get_issue_counts(org, repo):
 def get_branches(org, repo):
     url = f"https://api.github.com/repos/{org}/{repo}/branches"
     branches = github_api_get(url)
+    # Handle None or empty responses
+    branches = branches if branches is not None else []
     return len(branches)
 
 def get_tags(org, repo):
     url = f"https://api.github.com/repos/{org}/{repo}/tags"
     tags = github_api_get(url)
+    # Handle None or empty responses
+    tags = tags if tags is not None else []
     return len(tags)
 
 def get_last_commit(org, repo, default_branch):
     url = f"https://api.github.com/repos/{org}/{repo}/commits/{default_branch}"
     commit = github_api_get(url)
-    if commit:
+    if commit is None:
+        # Repository is empty (no commits)
+        return "Empty Repository", "N/A"
+    elif commit and isinstance(commit, dict):
         date = commit["commit"]["committer"]["date"]
         author = commit["commit"]["committer"]["name"]
         return date, author
@@ -128,6 +148,8 @@ def main():
                 last_commit_date, last_commit_user = get_last_commit(GH_ORG, repo["name"], repo["default_branch"])
                 releases_url = f"https://api.github.com/repos/{GH_ORG}/{repo['name']}/releases"
                 releases = github_api_get(releases_url, {"per_page": 1})
+                # Handle None or empty responses
+                releases = releases if releases is not None else []
 
                 row = {
                     "Repo Name": repo["name"],
@@ -143,7 +165,7 @@ def main():
                     "Total Open Issues": open_issues,
                     "Total Closed Issues": closed_issues,
                     "Total Branches": branch_count,
-                    "Total Releases": len(releases) if releases else 0,
+                    "Total Releases": len(releases),
                     "Total Tags": tag_count,
                     "Last Committed Date": last_commit_date,
                     "Last Committed User": last_commit_user
