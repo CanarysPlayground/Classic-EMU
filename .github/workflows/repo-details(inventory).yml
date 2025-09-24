@@ -26,8 +26,11 @@ jobs:
       - name: Run repo audit script
         run: python fetch_repo_details_inventory.py
 
+      - name: Set current date
+        run: echo "CURRENT_DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
+
       - name: Upload output CSV
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ env.GH_ORG }}-repo-details_$(date +%Y%m%d)
+          name: ${{ env.GH_ORG }}-repo-details_${{ env.CURRENT_DATE }}
           path: output/*.csv
