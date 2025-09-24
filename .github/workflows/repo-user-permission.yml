@@ -27,10 +27,13 @@ jobs:
       - name: Run repo-permissions script
         run: python fetch_repo_user_permissions.py  # Your script filename here
 
+      - name: Set current date
+        run: echo "CURRENT_DATE=$(date +%Y%m%d)" >> $GITHUB_ENV
+
       - name: Upload CSV and log
         uses: actions/upload-artifact@v4
         with:
-          name: repo-permissions-output
+          name: ${{ env.GH_ORG }}-repo-permissions_${{ env.CURRENT_DATE }}
           path: |
             user_repo_permission.csv
             repo-permissions.log
